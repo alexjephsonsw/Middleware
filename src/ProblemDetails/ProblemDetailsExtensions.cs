@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -32,6 +32,8 @@ namespace Hellang.Middleware.ProblemDetails
             }
 
             services.TryAddSingleton<ProblemDetailsFactory>();
+            services.TryAddSingleton<ProblemDetailsWriterFactory>();
+            services.TryAddSingleton<MvcProblemDetailsWriter>();
             services.TryAddSingleton<ProblemDetailsMarkerService, ProblemDetailsMarkerService>();
             services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigureOptions<ProblemDetailsOptions>, ProblemDetailsOptionsSetup>());
 
