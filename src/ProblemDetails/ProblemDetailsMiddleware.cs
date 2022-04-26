@@ -18,22 +18,18 @@ namespace Hellang.Middleware.ProblemDetails
     {
         private const string DiagnosticListenerKey = "Microsoft.AspNetCore.Diagnostics.HandledException";
 
-        private static readonly ActionDescriptor EmptyActionDescriptor = new();
-
-        private static readonly RouteData EmptyRouteData = new();
-
         public ProblemDetailsMiddleware(
             RequestDelegate next,
             IOptions<ProblemDetailsOptions> options,
             ProblemDetailsFactory factory,
-            IActionResultExecutor<ObjectResult> executor,
+            ProblemDetailsWriterFactory writerFactory,
             ILogger<ProblemDetailsMiddleware> logger,
             DiagnosticListener diagnosticListener)
         {
             Next = next;
             Factory = factory;
             Options = options.Value;
-            Executor = executor;
+            WriterFactory = writerFactory;
             Logger = logger;
             DiagnosticListener = diagnosticListener;
         }
@@ -44,7 +40,7 @@ namespace Hellang.Middleware.ProblemDetails
 
         private ProblemDetailsOptions Options { get; }
 
-        private IActionResultExecutor<ObjectResult> Executor { get; }
+        private ProblemDetailsWriterFactory WriterFactory { get; }
 
         private ILogger<ProblemDetailsMiddleware> Logger { get; }
 
@@ -147,23 +143,13 @@ namespace Hellang.Middleware.ProblemDetails
             edi.Throw(); // Re-throw the original exception if we can't handle it properly or it's intended.
         }
 
-        private async Task WriteProblemDetails(HttpContext context, MvcProblemDetails details)
+        private Task WriteProblemDetails(HttpContext context, MvcProblemDetails details)
         {
             Options.CallBeforeWriteHook(context, details);
 
-            var routeData = context.GetRouteData() ?? EmptyRouteData;
+            var writer = WriterFactory.Create();
 
-            var actionContext = new ActionContext(context, routeData, EmptyActionDescriptor);
-
-            var result = new ObjectResult(details)
-            {
-                StatusCode = details.Status ?? context.Response.StatusCode,
-                ContentTypes = Options.ContentTypes.Clone(),
-            };
-
-            await Executor.ExecuteAsync(actionContext, result);
-
-            await context.Response.CompleteAsync();
+            return writer.WriteProblemDetailsAsync(context, details);
         }
 
         private void ClearResponse(HttpContext context, int statusCode)
