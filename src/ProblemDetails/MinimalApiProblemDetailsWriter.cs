@@ -5,7 +5,6 @@ using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 
 namespace Hellang.Middleware.ProblemDetails
 {
-#
     public class MinimalApiProblemDetailsWriter : IProblemDetailsWriter
     {
         public Task WriteProblemDetailsAsync(HttpContext context, MvcProblemDetails details)
